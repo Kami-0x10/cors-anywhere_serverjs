@@ -8,31 +8,24 @@ const certificate = fs.readFileSync('/etc/letsencrypt/live/cors-0x10.online/full
 const credentials = { key: privateKey, cert: certificate };
 
 // ホワイトリストの設定
-const originWhitelist = ['https://kami-0x10.github.io'];
+const originWhitelist = ['https://kami-0x10.github.io']; // 許可するオリジンを指定
 
 // CORSプロキシサーバーを作成
 const proxy = cors_proxy.createServer({
   originWhitelist: originWhitelist,
-  requireHeader: ['origin', 'x-requested-with'],  // デフォルトのヘッダー設 定
+  requireHeader: ['origin', 'x-requested-with'],
   removeHeaders: ['cookie', 'cookie2'],
-  handleRequest: (req, res) => {
-    // リクエストの origin をチェック
-    const origin = req.headers.origin;
-
-    // repo1の場合、originとx-requested-withを必須にする
-    if (origin === 'https://kami-0x10.github.io/simpdon') {
-      req.headers['origin'] = 'https://kami-0x10.github.io';
-      req.headers['x-requested-with'] = 'XMLHttpRequest';
-    } else {
-      // repo2の場合、特にヘッダーを追加しない
-      req.headers['origin'] = origin || '';
-      req.headers['x-requested-with'] = '';
-    }
-
-    // 代理リクエストを送信
-    proxy.emit('request', req, res);
-  }
+  setHeaders: { 'Access-Control-Allow-Credentials': 'true' },
 });
+
+// HTTPSリダイレクトを強制するための修正
+const httpsRedirect = (req, res, next) => {
+    if (req.protocol === 'http') {
+        res.redirect(301, 'https://' + req.headers.host + req.url); // HTTPの場合、HTTPSにリダイレクト
+    } else {
+        next();
+    }
+};
 
 // HTTPSサーバーでCORSプロキシを起動
 const port = 443;
