@@ -18,15 +18,6 @@ const proxy = cors_proxy.createServer({
   setHeaders: { 'Access-Control-Allow-Credentials': 'true' },
 });
 
-// HTTPSリダイレクトを強制するための修正
-const httpsRedirect = (req, res, next) => {
-    if (req.protocol === 'http') {
-        res.redirect(301, 'https://' + req.headers.host + req.url); // HTTPの場合、HTTPSにリダイレクト
-    } else {
-        next();
-    }
-};
-
 // HTTPSサーバーでCORSプロキシを起動
 const port = 443;
 https.createServer(credentials, (req, res) => {
